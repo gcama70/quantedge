@@ -71,9 +71,20 @@ Respond ONLY with a valid JSON object — no markdown, no backticks, no preamble
     if (!textBlock) return res.status(502).json({ error: "No text in API response" });
 
     let raw = textBlock.text.trim().replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(raw);
-    return res.status(200).json(parsed);
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+const jsonMatch = raw.match(/\{[\s\S]*\}/);
+if (!jsonMatch) {
+  return res.status(200).json({
+    ticker: ticker,
+    companyName: ticker,
+    verdict: "HOLD",
+    confidence: "LOW",
+    summary: "Unable to find reliable data for this ticker. Please verify the ticker symbol is correct (use US-listed symbols like AAPL, NVDA, etc.).",
+    signals: [{type: "neutral", text: "Ticker may not be a standard US-listed stock"}],
+    currentPrice: "N/A", priceChange: "N/A", weekChange: "N/A",
+    marketCap: "N/A", peRatio: "N/A", catalysts: "N/A"
+  });
+}
+const parsed = JSON.parse(jsonMatch[0]);
+return res.status(200).json(parsed);
   }
 }
